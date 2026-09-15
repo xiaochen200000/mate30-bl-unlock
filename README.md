@@ -90,31 +90,26 @@
 ├── tools/                      ★可直接使用的脚本
 │   ├── console_ui.py                    控制台 UI 组件（零依赖）
 │   ├── config.example.ini               配置样例 → 复制为 config.ini 填写
-│   ├── readback_xloader.py              xloader 明文回读（交互式进度）
-│   └── readback_fastboot.py             fastboot 明文回读（4.67MB 整取，交互式进度）
-├── research/                   底层研究材料
-│   ├── xloader_send.py                  xloader 下载协议库（XMODEM 帧/CRC/进度回调）
-│   ├── PROTOCOL.md                      xloader 下载协议完整逆向记录
-│   ├── ar_read_poc.py                   任意读 PoC（probe/selftest/arm/scan/dump/restore）
-│   └── disasm/                          会话期逆向脚本存档（BootROM 扫描/锁函数反汇编/符号检索）
-└── probes/                     诊断小工具（fb_raw / backup_dd / port_listen / scan_dumps）
-    │                                    + parse_bl2log（BL2 日志解析，oem memory bl2 通道）
-    │                                    + pollute_diag（调试会话残留/引导分流诊断）
+│   ├── readback_xloader.py              ① xloader 明文回读（交互式进度）
+│   ├── readback_fastboot.py             ② fastboot 明文回读（4.67MB 整取，交互式进度）
+│   └── unlock_chain.py                  ③ 解锁主脚本（加载链+补丁+BL2+fastboot+备份+解锁）
 ```
 
-环境：Windows 10+、Python 3.10+、`pip install pyserial keystone-engine`。
+环境：Windows 10+、Python 3.10+、`pip install pyserial keystone-engine pyusb`（pyusb 仅分区备份需要）。
 
 ```bash
 cd tools
 copy config.example.ini config.ini      # 填写路径后保存
 
-python readback_xloader.py              # xloader 明文 → XLOADER_BD_PLAIN.bin
-python readback_fastboot.py             # fastboot 明文 → FASTBOOT_PLAIN.bin
-python ..\research\ar_read_poc.py       # 任意读 PoC（无参数看帮助）
+python readback_xloader.py              # ① xloader 明文 → XLOADER_BD_PLAIN.bin
+python readback_fastboot.py             # ② fastboot 明文 → FASTBOOT_PLAIN.bin
+python unlock_chain.py                  # ③ 全链: 加载链→补丁→BL2→fastboot→分区备份
+python unlock_chain.py --unlock         #    确认无误后执行 oem unlock
 ```
 
-两个回读工具带**实时进度反馈**：阶段横幅、进度条（速率）、静默等待倒计时、逐步 OK/FAIL
-判定与蜂鸣提示；失败自动重试（默认最多 40 轮），Ctrl+C 随时安全中断。
+三个脚本均带**实时进度反馈**：阶段横幅、进度条（速率）、静默/枚举等待倒计时、逐步 OK/FAIL
+判定与蜂鸣提示；失败自动重试，Ctrl+C 随时安全中断。解锁主脚本内部已合并任意读原语
+（probe/selftest/arm）与 7 处补丁表，无需其他文件。
 
 ## 5. 自备组件
 
@@ -122,6 +117,8 @@ python ..\research\ar_read_poc.py       # 任意读 PoC（无参数看帮助）
 |---|---|---|
 | 官方 BD 工程固件包（TAS-AL00，BD 1.0.0.33） | 提供 `sec_usb_xloader.img` / `sec_usb_xloader2.img` / `sec_fastboot.img` | [needrom: Huawei Mate 30 Taurus-AL00B BD](https://www.needrom.com/download/huawei-mate-30-taurus-al00b-bd/) |
 | null 载荷解密模块（`kirin_loader.py`） | 解出进入下载链所需的 null 载荷 | 自备组件，不随本仓库分发（运行时经 `config.ini` 指定目录） |
+| BL2 镜像 | 解锁链的启动触发（`bl2_img`） | 官方固件包 / 自有分区备份中获取 |
+| `fastboot.exe` | fastboot 交接与 oem 命令（`fastboot_exe`） | Android platform-tools |
 
 ## 6. 已验证范围（重要）
 
@@ -139,7 +136,8 @@ python ..\research\ar_read_poc.py       # 任意读 PoC（无参数看帮助）
 2. **物理操作**：设备需进入 USB 下载模式（VID 0x12D1/PID 0x3609 串口）；部分步骤需要断开
    主板测试点（TP4009）——0.1mm 间距，操作不当可能损坏 PCB。
 3. **变砖风险**：补丁写入引导链后由 BL2 触发执行，任何地址/字节错误都可能导致无法开机。
-   本仓库工具的失败模式设计为"不写持久状态"，但仍请先做好分区备份（probes/backup_dd.py）。
+   本仓库工具的失败模式设计为"不写持久状态"，但仍请先做好分区备份（unlock_chain.py 内置
+   upload_storage 分区备份）。
 4. **数据风险**：解锁会触发出厂重置类行为，请提前备份全部数据并记录锁屏密码/账号凭证。
 5. **法律风险**：固件解密与修改可能违反《计算机软件保护条例》等法规；解锁可能违反所在地区
    保修条款。仅限技术研究与自有设备。
