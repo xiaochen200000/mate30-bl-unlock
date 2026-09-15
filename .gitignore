@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+
+# 本地配置（含机器特定路径，禁止提交）
+tools/config.ini
+
+# 自备的第三方组件（含密钥材料，绝对禁止提交）
+kirin_loader*.py
+*.ktl
+
+# 固件 / 镜像 / dump / 构建产物（版权与隐私风险，禁止提交）
+*.bin
+*.img
+*.exe
+*.zip
+*.rar
+build/
+dist/
+
+# 运行日志
+*.log

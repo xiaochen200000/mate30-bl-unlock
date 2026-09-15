@@ -1,0 +1,10 @@
+Initial release: Mate30 (Kirin 990) BL unlock playbook and tools
+
+- docs: protocol, lock mechanism, unlock patch plan, lock locating
+  methodology, xloader arbitrary read, bootrom analysis
+- tools: interactive readback_xloader / readback_fastboot (refactored
+  from proven session configs), console UI, config template
+- research: xloader protocol library, PROTOCOL.md, ar-read PoC
+- probes: fb_raw, backup_dd, port_listen, scan_dumps
+
+No keys, firmware, or device-identifying data included.
