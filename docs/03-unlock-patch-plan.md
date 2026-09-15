@@ -77,7 +77,9 @@ usr_fastboot_unlock 流程:
 
 ## 4. 已知风险
 
-- 0x3A400000 读=挂设备（两次实证）；其余 DDR 候选未测
+- 0x3A400000 读=挂设备（两次实证）——注：此为 getter 1B/帧模式的实测；后续 BootROM 回调
+  walker 1024B/帧 模式已实测可稳定读 DDR 0x3A400000（FASTBOOT_4G_PLAIN_READBACK_OK.bin），
+  两种读机制勿混淆
 - BL2 是否重新校验 fastboot（决定 P1 打在 DDR 是否够）——运行时确认
 - xloader 侧对 fastboot 的校验（需求 3）：xloader 明文里 "xloader3 verify fail"、
   "BOOTMAGICNUMBER!" 相关路径，同样可用任意写运行时 NOP
