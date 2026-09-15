@@ -6,7 +6,7 @@ readback_fastboot.py — Mate30 (Kirin 990 4G) fastboot 明文回读 · 交互�
 协议时序、payload 汇编、触发方式逐字节保留，仅重做人机交互层，路径全部入 config.ini。
 
 原理（详见 docs/05-xloader-arbitrary-read.md）:
-  [BootROM] FRESH(07) → null.ktl 解密产物 @0x22000 → 线缆舞步(TP4009 OFF 3s ON)
+  [BootROM] FRESH(07) → null 载荷（解密后）@0x22000 → 线缆舞步(TP4009 OFF 3s ON)
   [注入]    向 SRAM 0x5C400 安装回调 payload；DM 分发器把读指针 G_PTR 指向
             DDR 0x3A400000（fastboot 明文的物理驻留区），走 0x4EDC 慢速分支服务
   [触发]    关闭串口 3 秒重开（fb 配置沿用 close-3s 触发，与 xloader 版的
@@ -27,7 +27,8 @@ readback_fastboot.py — Mate30 (Kirin 990 4G) fastboot 明文回读 · 交互�
 
 依赖:
     pip install pyserial keystone-engine
-    + 自备组件（见 README）: 官方 BD 固件包、Kirin-Tool 移植模块 kirin_loader.py
+    + 自备组件（见 README）: 官方 BD 固件包、null 载荷解密模块 kirin_loader.py
+      （自备，不入本仓库）
 """
 import argparse
 import binascii
@@ -563,7 +564,7 @@ def load_config(path):
 
 def load_null(kirin_dir):
     if not kirin_dir or not os.path.isdir(kirin_dir):
-        ui.error('未配置 kirin_module_dir（Kirin-Tool 移植模块目录，含 null.ktl 密钥）')
+        ui.error('未配置 kirin_module_dir（null 载荷解密模块目录）')
         ui.error('该组件须自行获取，不随本仓库分发——见 README「自备组件」。')
         sys.exit(2)
     sys.path.insert(0, kirin_dir)
@@ -574,7 +575,7 @@ def load_null(kirin_dir):
         sys.exit(2)
     loader_dir = getattr(K, 'LOADER_DIR', kirin_dir)
     null = K.dtl(open(os.path.join(loader_dir, 'null.ktl'), 'rb').read())
-    ui.step(True, 'null.ktl 解密完成: %d B' % len(null))
+    ui.step(True, 'null 载荷解密完成: %d B' % len(null))
     return null
 
 
@@ -598,7 +599,7 @@ def main():
     ui.banner('Mate30 fastboot 明文回读（fb_dump proven 配置重构版）')
     ui.info('BD 镜像 : %s' % cfg['bdimg'])
     ui.info('输出到  : %s' % cfg['dump_path'])
-    ui.phase('准备 payload 与 null.ktl')
+    ui.phase('准备 payload 与 null 载荷')
     blob = build_payload()
     ui.step(True, 'payload %d B 组装完成（DM 读指针 = DDR 0x3A400000）' % len(blob))
     null_blob = load_null(cfg['kirin_dir'])

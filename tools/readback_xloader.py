@@ -7,7 +7,7 @@ readback_xloader.py — Mate30 (Kirin 990 4G) BD xloader 明文回读 · 交互�
 （阶段横幅 / 进度条 / 倒计时 / 逐步判定），并把机器相关路径全部移入 config.ini。
 
 原理（详见 docs/06-bootrom-xloader-analysis.md 与 docs/05-xloader-arbitrary-read.md）:
-  [BootROM] FRESH(07) 会话 → 喂 null.ktl 解密产物 @0x22000 → 线缆舞步(TP4009 OFF 3s ON)
+  [BootROM] FRESH(07) 会话 → 喂 null 载荷（解密后）@0x22000 → 线缆舞步(TP4009 OFF 3s ON)
             → BootROM 把 BD 官方包里的 sec_usb_xloader.img 解密运行
   [注入]    向 SRAM 0x5C400 安装 Thumb-2 回调 payload（CD 应答劫持 +
             0x5C730 分发器 + 0x5C800 向量表 + 0x5D3B4..FC 休眠返回链喷涂）
@@ -23,8 +23,8 @@ readback_xloader.py — Mate30 (Kirin 990 4G) BD xloader 明文回读 · 交互�
 
 依赖:
     pip install pyserial keystone-engine
-    + 自备组件（见 README）: 官方 BD 固件包、Kirin-Tool 移植模块 kirin_loader.py
-      （含 null.ktl 解密所需的密钥材料，出于合规不入本仓库）
+    + 自备组件（见 README）: 官方 BD 固件包、null 载荷解密模块 kirin_loader.py
+      （自备，不入本仓库）
 """
 import argparse
 import binascii
@@ -579,10 +579,10 @@ def load_config(path):
 
 
 def load_null(kirin_dir):
-    """加载用户自备的 Kirin-Tool 移植模块（含密钥材料，不入仓库）。"""
+    """加载用户自备的 null 载荷解密模块（不入仓库）。"""
     if not kirin_dir or not os.path.isdir(kirin_dir):
-        ui.error('未配置 kirin_module_dir（Kirin-Tool 移植模块目录）')
-        ui.error('该模块提供 dtl() 与 null.ktl 解密所需密钥，出于合规不在本仓库分发，')
+        ui.error('未配置 kirin_module_dir（null 载荷解密模块目录）')
+        ui.error('该模块提供 dtl() 与 LOADER_DIR，须自行准备，不在本仓库分发，')
         ui.error('请参考 README「自备组件」一节自行准备后，把目录写进 config.ini。')
         sys.exit(2)
     sys.path.insert(0, kirin_dir)
@@ -593,7 +593,7 @@ def load_null(kirin_dir):
         sys.exit(2)
     loader_dir = getattr(K, 'LOADER_DIR', kirin_dir)
     null = K.dtl(open(os.path.join(loader_dir, 'null.ktl'), 'rb').read())
-    ui.step(True, 'null.ktl 解密完成: %d B' % len(null))
+    ui.step(True, 'null 载荷解密完成: %d B' % len(null))
     return null
 
 
@@ -617,7 +617,7 @@ def main():
     ui.banner('Mate30 xloader 明文回读（proven 配置重构版）')
     ui.info('BD 镜像 : %s' % cfg['bdimg'])
     ui.info('输出到  : %s' % cfg['dump_path'])
-    ui.phase('准备 payload 与 null.ktl')
+    ui.phase('准备 payload 与 null 载荷')
     blob = build_payload()
     ui.step(True, 'payload %d B 组装完成（cb@%05X dm@%05X vt@%05X）'
             % (len(blob), CALLBACK, DM_ADDR, VT_ADDR))

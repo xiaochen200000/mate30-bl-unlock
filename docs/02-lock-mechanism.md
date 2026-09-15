@@ -40,12 +40,10 @@ NOP        = 1f2003d5
 ## 四、实测状态(2026-09)
 
 - USER Lock: **真解锁持久**(原装 fastboot 读出 UNLOCKED, oem unlock 认账 already unlocked)
-- FB Lock: 显示 LOCKED(原装读数), 会话内 P14fb 强制 UNLOCKED
-  - 永久化路线: 直接调用写入函数(绕过 RSA/TLV 校验)或 slock TLV 正确构造
+- 永久化路线(FB Lock): 直接调用写入函数(绕过 RSA/TLV 校验)或 slock TLV 正确构造
 - bootinfo 显示 locked = 独立标记与锁机制不同步(两套存储)
 
 ## 五、注意事项
 
 - FBLOCK NVE 项写 00 在 Kirin 970+ 对 FB Lock **无效**
 - 检测类补丁不可永久固化(每次引导重算), 只在 staged 会话内有效
-- 网上"E180 系"或"10.0.0.135 系"完整包与此设备版本(C00E167R5P3)**不匹配, 严禁混刷**

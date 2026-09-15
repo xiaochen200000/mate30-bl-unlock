@@ -51,9 +51,8 @@
 - oem memory <name> <文件>  RAM 区转储(bl2/bl31/pstore/kerneldump/bbox/lpmcu_image)
 
 ## 五、锁状态语义
-- USER Lock: oeminfo NV 真值(0x5D 项), 1=UNLOCKED(持久, 当前已解锁)
+- USER Lock: oeminfo NV 真值(0x5D 项), 1=UNLOCKED(持久)
 - FB LockState: oeminfo_rdmode_info() 读 NV 0x82 项, 成功→1=UNLOCKED, 失败→0=LOCKED
-  当前显示 LOCKED 的原因=0x82 项读失败(待修); P14fb 补丁=会话内强制 1
 - FBLOCK NVE 项: 970+ 已与 FB Lock 脱钩(写 00 无效)
 
 ## 六、FB Lock 永久解锁路线(定案)
