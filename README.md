@@ -10,7 +10,6 @@
 - ✅ 双层锁机制完整逆向（FB Lock / USER Lock 语义与存储位置）
 - ✅ 双锁解锁（原装 fastboot 亲口读出双 UNLOCKED）
 - ✅ BL2 日志捕获通道（`oem memory bl2`）
-- ⏳ 引导分流标志定位（进行中）
 - ⏳ 鸿蒙 4.2 OTA 获取（路径已定：本机 OTA 递进）
 
 > [!CAUTION]
