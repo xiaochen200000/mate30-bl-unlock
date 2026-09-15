@@ -10,7 +10,6 @@
 - ✅ 双层锁机制完整逆向（FB Lock / USER Lock 语义与存储位置）
 - ✅ 双锁解锁（原装 fastboot 亲口读出双 UNLOCKED）
 - ✅ BL2 日志捕获通道（`oem memory bl2`）
-- ⏳ 鸿蒙 4.2 OTA 获取（路径已定：本机 OTA 递进）
 
 > [!CAUTION]
 > **本项目全部代码、分析与文档均由 AI（AI 助手）生成，未经人工逐行审核。**
@@ -70,6 +69,14 @@
 - **锁机制**：FB Lock（`rdmode` NV）+ USER Lock（NV 0x5D）双层锁，docs/02
 - **补丁方案**：P1 任意码解锁 + 命令门/logo/AVB/certify 放行共 7 处补丁，docs/03
 - **锁函数定位方法论**：无符号明文中锚点字符串 → xref → 补丁模板，docs/04
+
+### 我们实际使用的方法
+
+| 目标 | 核心方法 | 关键点 |
+|---|---|---|
+| **xloader 明文回读** | BootROM 期 **FPB 断点**回调注入 | null 载荷 + 线缆舞步打开下载态 → 向 SRAM 0x5C400 装 Thumb-2 回调（写 FPB 比较器劫持 0x915 中断与 CD 应答路径）→ 0x5D3B4..FC 休眠返回链喷涂 → 纯静默 150s×2 触发 → 喂官方 BD 包让设备原位解密 → CD 应答按 4B/次送回明文（192KB ELF） |
+| **fastboot 明文回读** | **xloader 阶段任意写** | xloader 下载协议 HEAD 帧 ADDRESS 字段不校验 → HEAD 重发式任意写：改 getter 字面量 + 装 48B 桩 + 三处代码补丁（A/B/C）激活 1024B/帧 → 读指针指向 DDR 0x3A400000 → 整取 4.67MB 明文 |
+| **解BL** | 明文定位 + 运行期补丁 | 在 fastboot 明文中按锚点定位锁函数（docs/04）→ 7 处 ARM64 补丁写入并逐个读回验证 → BL2 staging（tail=启动触发）→ fastboot 重枚举 → `oem unlock` 任意码 |
 
 > 以上链路已在自有设备实测走通：原装 fastboot 亲口读出 FB Lock / USER Lock 双 UNLOCKED。
 
